@@ -1,7 +1,8 @@
 #include "include/cache.h"
+
+#include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
-#include <boost/asio.hpp>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -19,36 +20,51 @@ std::string originServer;
 void CachingProxy::processCommand(int argc, char* argv[0])
 {
     std::string port, origin;
-    for (int i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i)
+    {
         std::string arg = argv[i];
-        if (arg == "--port" && i + 1 < argc) {
+        if (arg == "--port" && i + 1 < argc)
+        {
             port = argv[++i];
-        } else if (arg == "--origin" && i + 1 < argc) {
+        }
+        else if (arg == "--origin" && i + 1 < argc)
+        {
             origin = argv[++i];
-        } else if (arg == "--clear-cache") {
+        }
+        else if (arg == "--clear-cache")
+        {
             clearCache();
-        } else {
+        }
+        else
+        {
             std::cerr << "Invalid command: " << arg << std::endl;
         }
     }
 
-    if (!port.empty() && !origin.empty()) {
+    if (!port.empty() && !origin.empty())
+    {
         int portNum = std::stoi(port);
         startServer(portNum, origin);
-    } else {
+    }
+    else
+    {
         std::cerr << "Missing --port or --origin parameters." << std::endl;
     }
 }
 
-void CachingProxy::startServer(int port, const std::string& origin) {
+void CachingProxy::startServer(int port, const std::string& origin)
+{
     originServer = origin;
 
-    try {
+    try
+    {
         net::io_context ioc;
         tcp::acceptor acceptor(ioc, tcp::endpoint(tcp::v4(), port));
-        std::cout << "Proxy server started on port " << port << " forwarding to " << origin << std::endl;
+        std::cout << "Proxy server started on port " << port << " forwarding to " << origin
+                  << std::endl;
 
-        while (true) {
+        while (true)
+        {
             tcp::socket socket(ioc);
             acceptor.accept(socket);
 
@@ -70,20 +86,25 @@ void CachingProxy::startServer(int port, const std::string& origin) {
 
             http::write(socket, res);
         }
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 }
 
-void CachingProxy::clearCache() {
+void CachingProxy::clearCache()
+{
     std::lock_guard<std::mutex> lock(cacheMutex);
     cache.clear();
     std::cout << "Cache cleared successfully!" << std::endl;
 }
 
-std::string CachingProxy::getCachedResponse(const std::string& target) {
+std::string CachingProxy::getCachedResponse(const std::string& target)
+{
     std::lock_guard<std::mutex> lock(cacheMutex);
-    if (cache.find(target) != cache.end()) {
+    if (cache.find(target) != cache.end())
+    {
         std::cout << "X-Cache: HIT\n";
         return cache[target];
     }
@@ -94,8 +115,10 @@ std::string CachingProxy::getCachedResponse(const std::string& target) {
     return response;
 }
 
-std::string CachingProxy::fetchFromOrigin(const std::string& target) {
-    try {
+std::string CachingProxy::fetchFromOrigin(const std::string& target)
+{
+    try
+    {
         net::io_context ioc;
         tcp::resolver resolver(ioc);
         auto const results = resolver.resolve(originServer, "80");
@@ -114,7 +137,9 @@ std::string CachingProxy::fetchFromOrigin(const std::string& target) {
         http::read(stream, buffer, res);
 
         return res.body();
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         std::cerr << "Error fetching from origin: " << e.what() << std::endl;
         return "Error: Unable to fetch response.";
     }
