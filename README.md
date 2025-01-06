@@ -19,10 +19,10 @@ The caching proxy server should start on port 3000 and forward requests to http:
 
 Taking the above example, if the user makes a request to http://localhost:3000/products, the caching proxy server should forward the request to http://dummyjson.com/products, return the response along with headers and cache the response. Also, add the headers to the response that indicate whether the response is from the cache or the server.
 
-# If the response is from the cache
+If the response is from the cache
 X-Cache: HIT
 
-# If the response is from the origin server
+If the response is from the origin server
 X-Cache: MISS
 If the same request is made again, the caching proxy server should return the cached response instead of forwarding the request to the server.
 
