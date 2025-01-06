@@ -1,14 +1,17 @@
-#pragma once
+#ifndef CACHING_PROXY_H
+#define CACHING_PROXY_H
 
-#include <map>
+#include <string>
 
-class CachingProxy
-{
+class CachingProxy {
 public:
-    void processCommand(int argc, char* argv[]);
-    std::string getResponse(const std::string& url);
-    std::string getFromCache(const std::string& url);
-    void CachingProxy::addToCache(const std::string url, const std::string &response);
+    void startServer(int port, const std::string& origin);
+    void clearCache();
+    void processCommand(int argc, char* argv[0]);
 private:
-    std::map<std::string, std::string> cache; 
+    std::string fetchFromOrigin(const std::string& target);
+    std::string getCachedResponse(const std::string& target);
+    void cacheResponse(const std::string& target, const std::string& response);
 };
+
+#endif // CACHING_PROXY_H

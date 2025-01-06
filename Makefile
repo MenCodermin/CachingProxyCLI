@@ -4,66 +4,43 @@
 
 # Compiler settings - Can be customized.
 CC = g++
-CXXFLAGS = -std=c++11 -Wall
-LDFLAGS = 
+CXXFLAGS = -std=c++17 -Wall -Wextra -I "C:/Program Files/boost"
+LDFLAGS = -L "C:/Program Files/boost/stage/lib" -lboost_system-mgw14-mt-x64-1_87 -lws2_32 -liphlpapi
 
-# Makefile settings - Can be customized.
-APPNAME = myapp
-EXT = .cpp
+APPNAME = caching-proxy
 SRCDIR = src
 OBJDIR = obj
+SRC = $(wildcard $(SRCDIR)/*.cpp)
+OBJ = $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
-############## Do not change anything from here downwards! #############
-SRC = $(wildcard $(SRCDIR)/*$(EXT))
-OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o)
-DEP = $(OBJ:$(OBJDIR)/%.o=%.d)
-# UNIX-based OS variables & settings
-RM = rm
-DELOBJ = $(OBJ)
-# Windows OS variables & settings
-DEL = del
-EXE = .exe
-WDELOBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)\\%.o)
+all: $(OBJDIR) $(APPNAME)
 
-########################################################################
-####################### Targets beginning here #########################
-########################################################################
-
-all: $(APPNAME)
-
-# Builds the app
 $(APPNAME): $(OBJ)
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Creates the dependecy rules
-%.d: $(SRCDIR)/%$(EXT)
-	@$(CPP) $(CFLAGS) $< -MM -MT $(@:%.d=$(OBJDIR)/%.o) >$@
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
-# Includes all .h files
--include $(DEP)
-
-# Building rule for .o files and its .c/.cpp in combination with all .h
-$(OBJDIR)/%.o: $(SRCDIR)/%$(EXT)
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CC) $(CXXFLAGS) -o $@ -c $<
 
-################### Cleaning rules for Unix-based OS ###################
-# Cleans complete project
-.PHONY: clean
 clean:
-	$(RM) $(DELOBJ) $(DEP) $(APPNAME)
+ifeq ($(OS),Windows_NT)
+	@if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
+	@if exist $(APPNAME).exe del /q $(APPNAME).exe
+	@if exist *.d del /q *.d
+else
+	rm -rf $(OBJDIR) $(APPNAME) *.d
+endif
 
-# Cleans only all files with the extension .d
-.PHONY: cleandep
-cleandep:
-	$(RM) $(DEP)
-
-#################### Cleaning rules for Windows OS #####################
-# Cleans complete project
-.PHONY: cleanw
-cleanw:
-	$(DEL) $(WDELOBJ) $(DEP) $(APPNAME)$(EXE)
-
-# Cleans only all files with the extension .d
-.PHONY: cleandepw
-cleandepw:
-	$(DEL) $(DEP)
+# Thorough cleanup, including logs and temp files
+clear:
+ifeq ($(OS),Windows_NT)
+	@if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
+	@if exist $(APPNAME).exe del /q $(APPNAME).exe
+	@if exist *.d del /q *.d
+	@if exist *.log del /q *.log
+	@if exist *.tmp del /q *.tmp
+else
+	rm -rf $(OBJDIR) $(APPNAME) *.d *.log *.tmp
+endif
